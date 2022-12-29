@@ -30,14 +30,14 @@ app.route('/login')
     })
     .post(function(req, res){
         User.findOne({email: req.body.username}, function(err, result){
-            if (result) {
+            if (err) {
+                res.send(err)
+            } else if (!result) {
+                res.send(`<h1>No such user exists, please check your spelling or sign up.</h1>`);
+            } else if (result) {
                 if (result.password === req.body.password) {
                     res.render(`secrets`);
                 } else {res.send(`<h1>Incorrect password, please try again.</h1>`)}
-            } else if (!result) {
-                {res.send(`<h1>No such user exists, please check your spelling or sign up.</h1>`);}
-            } else if (err) {
-                res.send(err);
             };
         });
     });
