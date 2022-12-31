@@ -3,8 +3,13 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const ejs = require('ejs');
 const mongoose = require('mongoose');
+
 // const encrypt = require('mongoose-encryption');
-var md5 = require('md5');
+
+// var md5 = require('md5');
+
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 port = process.env.PORT || 3000;
 
@@ -40,9 +45,12 @@ app.route('/login')
             } else if (!result) {
                 res.send(`<h1>No such user exists, please check your spelling or sign up.</h1>`);
             } else if (result) {
-                if (result.password === md5(req.body.password)) {
-                    res.render(`secrets`);
-                } else {res.send(`<h1>Incorrect password, please try again.</h1>`);}
+                bcrypt.compare(req.body.password, result.password, function(err, results){
+                    if (results === true){
+                        res.render(`secrets`);
+                    }
+                    else {res.send(`<h1>Incorrect password, please try again.</h1>`);}
+                });
             };
         });
     });
@@ -52,14 +60,16 @@ app.route('/register')
         res.render('register');
     })
     .post(function(req, res){
-        newUser = new User({
-            email: req.body.username,
-            password: md5(req.body.password)
-        });
-        newUser.save(function(err, result){
-            if (!err) {
-                res.render('secrets');
-            } else {res.send(err);}
+        bcrypt.hash(req.body.password, saltRounds, function(err, hash){
+            newUser = new User({
+                email: req.body.username,
+                password: hash
+            });
+            newUser.save(function(err, result){
+                if (!err) {
+                    res.render('secrets');
+                } else {res.send(err);}
+            });
         });
     });
 
